@@ -1,0 +1,60 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: mall-service
+  profiles:
+    active: dev
+  cloud:
+    nacos:
+      # 注册中心地址：默认指向开发环境的 Nacos，可用环境变量 NACOS_ADDR 覆盖
+      discovery:
+        server-addr: ${NACOS_ADDR:192.168.150.88:8848}
+        fail-fast: false
+  datasource:
+    url: jdbc:mysql://${mall.db.host}:3306/mall?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: ${mall.db.pw}
+mybatis-plus:
+  configuration:
+    default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler
+  global-config:
+    db-config:
+      update-strategy: not_null
+      id-type: auto
+logging:
+  level:
+    com.mall: debug
+  pattern:
+    dateformat: HH:mm:ss:SSS
+  file:
+    path: "logs/${spring.application.name}"
+knife4j:
+  enable: true
+  openapi:
+    title: 商城接口文档
+    description: "商城 · 用户/商品/购物车/订单/支付接口文档"
+    email: dev@mall.com
+    concat: 商城研发组
+    version: v1.0.0
+    group:
+      default:
+        group-name: default
+        api-rule: package
+        api-rule-resources:
+          - com.mall.controller
+# 自定义配置项（zx 为项目统一前缀，与 JwtProperties/AuthProperties 的绑定前缀保持一致）
+mall:
+  jwt:
+    location: classpath:mall.jks
+    alias: mall
+    password: mall123
+    tokenTTL: 30m
+  auth:
+    excludePaths:
+      - /search/**
+      - /users/login
+      - /items/**
+      - /hi
+# keytool -genkeypair -alias mall -keyalg RSA -keypass mall123 -keystore mall.jks -storepass mall123

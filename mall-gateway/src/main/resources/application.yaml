@@ -1,0 +1,49 @@
+server:
+  port: 18088
+spring:
+  application:
+    name: mall-gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.150.88:8848
+        # Nacos 不可用时仅告警，不影响网关启动（开发期友好；生产可改为 true）
+        fail-fast: false
+#        username: nacos
+#        password: nacos
+    gateway:
+      # 关闭“按服务名自动生成路由”，外部只能走下面的显式路由表
+      discovery:
+        locator:
+          enabled: false
+      # 跨域：前端只访问网关，下游服务不再各自处理 CORS
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+      routes:
+        # 本项目是单体服务：五个业务域（商品/购物车/用户/交易/支付）都跑在 mall-service 里，
+        # 原配置沿用了微服务版本的 lb://item-service、cart-service… 等 5 个服务名，
+        # 那些服务并不存在，导致所有路由 503。这里统一指向 mall-service，路径规则保持不变。
+        - id: mall-service
+          uri: lb://mall-service
+          predicates:
+            - Path=/items/**,/items,/search/**,/search,/carts/**,/carts,/users/**,/users,/addresses/**,/addresses,/orders/**,/orders,/pay-orders/**,/pay-orders
+
+logging:
+  level:
+    com.mall: debug
+  pattern:
+    dateformat: HH:mm:ss:SSS
+  file:
+    path: "logs/${spring.application.name}"
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
